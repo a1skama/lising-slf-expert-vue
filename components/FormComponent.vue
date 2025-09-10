@@ -238,14 +238,14 @@ const isSubmit = ref(false);
 const isSubmitSuccess = ref(false);
 const isSubmitError = ref(false);
 
-const { activePracticeId } = usePractices();
+// const { activePracticeId } = usePractices();
 
 const practics = ref([
   { id: 0, value: "Практика не выбрана", label: "Выберите практику" },
   { id: 1, value: "Практика не выбрана", label: "Таможня" },
 ]);
 
-const activePractic = ref(practics.value[activePracticeId.value]);
+// const activePractic = ref(practics.value[activePracticeId.value]);
 
 const { files, open, reset, onChange } = useFileDialog({});
 

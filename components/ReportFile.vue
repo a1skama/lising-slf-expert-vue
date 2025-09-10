@@ -19,91 +19,24 @@
       <div class="overflow-x-auto">
         <table class="w-full border-collapse">
           <tbody>
-            <tr class="border-t">
-              <td class="py-3 px-3 align-top w-1/2 text-sm">
-                Стоимость ДФЛ (лизинг+аванс+выкуп), ₽
-              </td>
-              <td class="py-3 px-3 align-top w-1/2 text-sm text-left">
-                1&nbsp;000 ₽
-              </td>
-            </tr>
 
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Стоимость по ДКП, ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Аванс, ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Срок лизинга, дней</td>
-              <td class="py-3 px-3 text-sm text-left">31 день</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Размер финансирования, ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">
-                Плата за финансирование (по договору), ₽
-              </td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Процентная ставка (годовых), %</td>
-              <td class="py-3 px-3 text-sm text-left">10 %</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">
-                Фактический срок пользования, дней
-              </td>
-              <td class="py-3 px-3 text-sm text-left">31 день</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Неустойка (пени, штрафы), ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Страхование (невозмещённое), ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Хранение и эвакуация, ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">Оплачено (без аванса), ₽</td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
-            </tr>
-
-            <tr class="border-t">
-              <td class="py-3 px-3 text-sm">
-                Стоимость возвращённого предмета, ₽
-              </td>
-              <td class="py-3 px-3 text-sm text-left">1&nbsp;000 ₽</td>
+            <tr class="border-t" v-for="(item, i) in data" :key="i">
+              <td class="py-3 px-3 text-sm">{{ item.title }}</td>
+              <td class="py-3 px-3 text-sm text-left">{{ item.subtitle }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <div class="mt-6 text-lg font-semibold">
-        Итого по расчету вам должны:
-        <span class="text-2xl">18&nbsp;428 ₽</span>
+        <span v-if="summ > 0">Итого по расчету вам должны:</span>
+        <span v-else>Итого по расчету лизинг должен вам:</span>
+        
+        <span class="text-2xl">{{ summ }}</span>
       </div>
     </section>
 
-    <div class="mt-20 border-t pt-4 text-sm text-gray-600">
+    <div class="mt-4 border-t pt-4 text-sm text-gray-600">
       <p>
         Расчёт выполнен автоматически и носит справочный характер. Итоговые
         условия уточняются индивидуально. Документ не является публичной
@@ -115,7 +48,7 @@
 
 <style scoped>
 .a4 {
-  width: 210mm; 
+  width: 210mm;
   min-height: 297mm;
   max-width: 100%;
   box-sizing: border-box;
@@ -136,3 +69,16 @@ table td {
   }
 }
 </style>
+
+<script setup>
+const props = defineProps({
+  data: {
+    type: Array,
+    required: true,
+  },
+  summ: {
+    type: String,
+    required: true,
+  },
+});
+</script>

@@ -56,10 +56,13 @@ h4 {
   }
 }
 
+input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }  
+input[type="number"] { -moz-appearance: textfield; }  
+
+
 .text-clamp {
   display: -webkit-box;
   -webkit-line-clamp: 3;
-  /* Количество строк, до которого отображается текст */
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
