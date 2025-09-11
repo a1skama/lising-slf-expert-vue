@@ -52,21 +52,6 @@ const form = reactive({
 
 const result = ref([]);
 
-function parseDate(str) {
-  if (!str) return null;
-  const [d, m, y] = str.split(".").map(Number);
-  if (!d || !m || !y) return null;
-  return new Date(y, m - 1, d); 
-}
-
-function diffDays(date1, date2) {
-  if (!date1 || !date2) return null;
-  const diff = date1.getTime() - date2.getTime();
-  return Math.round(diff / (1000 * 60 * 60 * 24));
-}
-
-
-
 
 
 const requiredFields = {
@@ -75,6 +60,24 @@ const requiredFields = {
   3: ["resaleDate", "seizureDate"],
   4: ["buyoutOffer", "avitoPrice"],
 };
+
+function parseDate(str) {
+  if (!str) return null;
+  const parts = String(str).trim().split(".");
+  if (parts.length !== 3) return null;
+  let [d, m, y] = parts.map((p) => Number(p));
+  if (!d || !m || !y) return null;
+  if (y < 100) y = 2000 + y;  
+  return new Date(y, m - 1, d);
+}
+
+function diffDays(date1, date2) {
+  if (!(date1 instanceof Date) || !(date2 instanceof Date)) return null;
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
+  const utc2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
+  return Math.floor((utc1 - utc2) / msPerDay);
+}
 
 const nextStep = () => {
   // очистка ошибок
@@ -93,64 +96,79 @@ const nextStep = () => {
 
   if (step.value < totalSteps) {
     step.value++;
-  } else {
-    // парсим даты
-    const transferDate = parseDate(form.transferDate);
-    const lastPaymentDate = parseDate(form.lastPaymentDate);
-    const seizureDate = parseDate(form.seizureDate);
-
-    // сроки в днях
-    const leaseTermDays = Math.round(diffDays(lastPaymentDate, transferDate) || 0);
-    const factUsageDays = seizureDate ? Math.round(diffDays(seizureDate, transferDate) || 0) : 0;
-
-    // функции округления и форматирования
-    const format = (num, unit = "") => `${Math.round(num).toLocaleString("ru-RU")}${unit ? ` ${unit}` : ""}`;
-
-    // основные суммы
-    const leasePayments = Number(form.leasePayments || 0);
-    const advancePayment = Number(form.advancePayment || 0);
-    const buyoutPrice = Number(form.buyoutPrice || 0);
-    const dkpPrice = Number(form.dkpPrice || 0);
-    const penalties = Number(form.penalties || 0);
-    const insuranceExpenses = Number(form.insuranceExpenses || 0);
-    const storageExpenses = Number(form.storageExpenses || 50000);
-    const paidWithoutAdvance = Number(form.paidWithoutAdvance || 0);
-    const buyoutOffer = Number(form.buyoutOffer || 0);
-    const avitoPrice = Number(form.avitoPrice || 0);
-
-    // расчёт финансирования по договору
-    const totalLease = leasePayments + advancePayment + buyoutPrice;
-    const financingAmount = dkpPrice - advancePayment;
-    const financingPayment = totalLease - advancePayment - dkpPrice;
-
-    // процентная ставка годовых
-    const annualRate = leaseTermDays ? (financingPayment / financingAmount) * 365 / leaseTermDays : 0;
-
-    // фактическая плата за финансирование
-    const actualFinancingPayment = factUsageDays ? (financingAmount * annualRate * factUsageDays) / 365 : 0;
-
-    // стоимость возвращённого предмета
-    const returnedItemValue = ((buyoutOffer + avitoPrice) / 2) * 0.83;
-
-    result.value = [
-      { title: "Стоимость ДФЛ (лизинг+аванс+выкуп), ₽", subtitle: format(totalLease, "₽") },
-      { title: "Стоимость по ДКП, ₽", subtitle: format(dkpPrice, "₽") },
-      { title: "Аванс, ₽", subtitle: format(advancePayment, "₽") },
-      { title: "Срок лизинга, дней", subtitle: format(leaseTermDays, "д") },
-      { title: "Размер финансирования, ₽", subtitle: format(financingAmount, "₽") },
-      { title: "Плата за финансирование (по договору), ₽", subtitle: format(financingPayment, "₽") },
-      { title: "Процентная ставка (годовых), %", subtitle: format(annualRate, "%") },
-      { title: "Фактический срок пользования, дней", subtitle: format(factUsageDays, "д") },
-      { title: "Плата за финансирование фактическая, ₽", subtitle: format(actualFinancingPayment, "₽") },
-      { title: "Неустойка (пени, штрафы), ₽", subtitle: format(penalties, "₽") },
-      { title: "Страхование (невозмещённое), ₽", subtitle: format(insuranceExpenses, "₽") },
-      { title: "Хранение и эвакуация, ₽", subtitle: format(storageExpenses, "₽") },
-      { title: "Оплачено (без аванса), ₽", subtitle: format(paidWithoutAdvance, "₽") },
-      { title: "Стоимость возвращённого предмета, ₽", subtitle: format(returnedItemValue, "₽") },
-    ];
-
-    resultVisible.value = true;
+    return;
   }
+
+  // --- даты ---
+  const transferDate = parseDate(form.transferDate);
+  const lastPaymentDate = parseDate(form.lastPaymentDate);
+  const seizureDate = parseDate(form.seizureDate);
+
+  // --- сроки ---
+  const leaseTermDays = Math.max(0, diffDays(lastPaymentDate, transferDate) || 0);
+  let factUsageDays = 0;
+  if (seizureDate) {
+    const raw = diffDays(seizureDate, transferDate) || 0;
+    factUsageDays = Math.max(0, raw + 180);
+  }
+
+  // --- входные числа ---
+  const leasePayments = Number(form.leasePayments || 0);
+  const advancePayment = Number(form.advancePayment || 0);
+  const buyoutPrice = Number(form.buyoutPrice || 0);
+  const dkpPrice = Number(form.dkpPrice || 0);
+  const penalties = Number(form.penalties || 0);
+  const insuranceExpenses = Number(form.insuranceExpenses || 0);
+  const storageExpenses = Number(form.storageExpenses || 50000);
+  const paidWithoutAdvance = Number(form.paidWithoutAdvance || 0);
+  const buyoutOffer = Number(form.buyoutOffer || 0);
+  const avitoPrice = Number(form.avitoPrice || 0);
+
+  // --- ключевые расчёты ---
+  const totalLease = leasePayments + advancePayment + buyoutPrice; // Лизинг+аванс+выкуп
+  const financingAmount = dkpPrice - advancePayment; // Размер финансирования
+  const financingPayment = totalLease - advancePayment - dkpPrice; // Плата за финансирование (по договору)
+
+  // Процентная ставка (годовых), %
+  let annualRatePercent = 0;
+  if (financingAmount > 0 && leaseTermDays > 0) {
+    annualRatePercent = (financingPayment / financingAmount) * (365 / leaseTermDays) * 100;
+  }
+  annualRatePercent = Number(annualRatePercent.toFixed(2)); // до сотых
+
+  // Плата за финансирование фактическая, ₽
+  let actualFinancingPayment = 0;
+  if (financingAmount > 0 && factUsageDays > 0 && annualRatePercent > 0) {
+    actualFinancingPayment =
+      financingAmount * (annualRatePercent / 100) * (factUsageDays / 365);
+  }
+  actualFinancingPayment = Math.round(actualFinancingPayment);
+
+  // Стоимость возвращённого предмета
+  const returnedItemValue = Math.round(((buyoutOffer + avitoPrice) / 2) * 0.83);
+
+  // --- форматирование ---
+  const fmt = (n, unit = "") =>
+    `${Math.round(n).toLocaleString("ru-RU")}${unit ? ` ${unit}` : ""}`;
+
+  result.value = [
+    { title: "Стоимость ДФЛ (лизинг+аванс+выкуп), ₽", subtitle: fmt(totalLease, "₽") },
+    { title: "Стоимость по ДКП, ₽", subtitle: fmt(dkpPrice, "₽") },
+    { title: "Аванс, ₽", subtitle: fmt(advancePayment, "₽") },
+    { title: "Срок лизинга, дней", subtitle: fmt(leaseTermDays, "д") },
+    { title: "Размер финансирования, ₽", subtitle: fmt(financingAmount, "₽") },
+    { title: "Плата за финансирование (по договору), ₽", subtitle: fmt(financingPayment, "₽") },
+    { title: "Процентная ставка (годовых), %", subtitle: `${annualRatePercent.toFixed(2)} %` },
+    { title: "Фактический срок пользования, дней", subtitle: fmt(factUsageDays, "д") },
+    { title: "Плата за финансирование фактическая, ₽", subtitle: fmt(actualFinancingPayment, "₽") },
+    { title: "Неустойка (пени, штрафы), ₽", subtitle: fmt(penalties, "₽") },
+    { title: "Страхование (невозмещённое), ₽", subtitle: fmt(insuranceExpenses, "₽") },
+    { title: "Хранение и эвакуация, ₽", subtitle: fmt(storageExpenses, "₽") },
+    { title: "Оплачено (без аванса), ₽", subtitle: fmt(paidWithoutAdvance, "₽") },
+    { title: "Стоимость возвращённого предмета, ₽", subtitle: fmt(returnedItemValue, "₽") },
+  ];
+
+  resultVisible.value = true;
 };
 
 
@@ -502,7 +520,7 @@ const restart = () => {
               class="p-[30px] bg-[#FFFFFF33] flex items-center justify-between rounded-[20px] flex-wrap"
             >
               <span
-                v-if="summ > 0"
+                v-if="summ < 0"
                 class="text-white font-medium text-lg 2xl:text-[1.625rem]"
                 >Итого по расчету вы должны:</span
               >

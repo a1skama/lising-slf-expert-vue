@@ -29,7 +29,7 @@
       </div>
 
       <div class="mt-6 text-lg font-semibold">
-        <span v-if="summ > 0">Итого по расчету вам должны:</span>
+        <span v-if="summ < 0">Итого по расчету вы должны:</span>
         <span v-else>Итого по расчету лизинг должен вам:</span>
         
         <span class="text-2xl">{{ summ }} ₽</span>
