@@ -32,7 +32,7 @@
         <span v-if="summ > 0">Итого по расчету вам должны:</span>
         <span v-else>Итого по расчету лизинг должен вам:</span>
         
-        <span class="text-2xl">{{ summ }}</span>
+        <span class="text-2xl">{{ summ }} ₽</span>
       </div>
     </section>
 
@@ -49,7 +49,6 @@
 <style scoped>
 .a4 {
   width: 210mm;
-  min-height: 297mm;
   max-width: 100%;
   box-sizing: border-box;
 }

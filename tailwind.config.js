@@ -17,7 +17,7 @@ module.exports = {
 
   theme: {
     fontFamily: {
-      sans: ["Onest", "sans-serif"],
+      sans: ["Onest", ...defaultTheme.fontFamily.sans],
     },
     // screens: {
     //   'sm': '640px',

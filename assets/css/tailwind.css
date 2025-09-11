@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  @font-face {
+    font-family: "Onest";
+    font-weight: 400;
+    font-display: swap;
+    src: url(../fonts/Onest-Regular.woff) format("woff"), url(../fonts/Onest-Regular.woff2) format("woff2");
+  }
+
+  @font-face {
+    font-family: "Onest";
+    font-weight: 500;
+    font-display: swap;
+    src: url(../fonts/Onest-Medium.woff) format("woff"), url(../fonts/Onest-Medium.woff2) format("woff2");
+  }
+
+  @font-face {
+    font-family: "Onest";
+    font-weight: 600;
+    font-display: swap;
+    src: url(../fonts/Onest-Semibold.woff) format("woff"), url(../fonts/Onest-Semibold.woff2) format("woff2");
+  }
+
+  @font-face {
+    font-family: "Onest";
+    font-weight: 700;
+    font-display: swap;
+    src: url(../fonts/Onest-Bold.woff) format("woff"), url(../fonts/Onest-Bold.woff2) format("woff2");
+  }
+
+  @font-face {
+    font-family: "Onest";
+    font-weight: 800;
+    font-display: swap;
+    src: url(../fonts/Onest-ExtraBold.woff) format("woff"), url(../fonts/Onest-ExtraBold.woff2) format("woff2");
+  }
+}
 ._container {
   @apply max-w-[1920px] px-4 sm:px-5 xl:px-[25px] 2xl:px-10 mx-auto w-full
 }
