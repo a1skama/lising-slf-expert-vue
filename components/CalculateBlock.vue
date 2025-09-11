@@ -621,7 +621,7 @@ const restart = () => {
       </div>
     </div>
 
-    <div class="">
+    <div class="hidden">
       <ReportFile :data="result" :summ="Math.abs(summNum).toLocaleString('ru-RU')" id="report-file" />
     </div>
   </div>

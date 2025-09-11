@@ -38,80 +38,85 @@
     src: url(../fonts/Onest-ExtraBold.woff) format("woff"), url(../fonts/Onest-ExtraBold.woff2) format("woff2");
   }
 }
-._container {
-  @apply max-w-[1920px] px-4 sm:px-5 xl:px-[25px] 2xl:px-10 mx-auto w-full
-}
 
-.btn {
-  @apply rounded-full shrink-0 px-6 py-4 2xl:px-8 xl:py-4 text-xs 2xl:text-sm uppercase duration-300 flex items-center justify-center gap-2.5;
-}
+@layer utilities {
 
-.btn-white {
-  @apply text-black bg-white fill-black hover:text-opacity-60 active:text-opacity-60 xl:active:text-black xl:active:fill-black disabled:bg-blue-400 disabled:text-blue-600 disabled:fill-blue-600;
-}
-
-.btn-main {
-  @apply bg-blue-100 text-white hover:text-opacity-60 active:text-opacity-100 disabled:text-[#F5F5F8] disabled:bg-[#909AAE] disabled:fill-[#F5F5F8];
-}
-
-.btn-blue {
-  @apply bg-blue-200 text-white fill-white active:text-opacity-60 hover:text-opacity-60 xl:active:text-white xl:active:bg-blue-200 disabled:bg-[#C1CDDD] transition duration-500;
-}
-
-.btn-white-02 {
+  ._container {
+    @apply max-w-[1920px] px-4 sm:px-5 xl:px-[25px] 2xl:px-10 mx-auto w-full
+  }
+  
+  .btn {
+    @apply rounded-full shrink-0 px-6 py-4 2xl:px-8 xl:py-4 text-xs 2xl:text-sm uppercase duration-300 flex items-center justify-center gap-2.5;
+  }
+  
+  .btn-white {
+    @apply text-black bg-white fill-black hover:text-opacity-60 active:text-opacity-60 xl:active:text-black xl:active:fill-black disabled:bg-blue-400 disabled:text-blue-600 disabled:fill-blue-600;
+  }
+  .btn-white-02 {
   @apply text-white bg-white-o2 hover:text-[#A3B8D0] transition-colors duration-500 xl:active:text-white active:text-[#A3B8D0];
 }
-
-h2 {
-  @apply fl-text-[1.5rem,4.25rem] leading-[100%] font-bold text-black
-}
-
-h3 {
-  @apply fl-text-[1.25rem,2.875rem] leading-[120%] xl:leading-[100%] font-medium
-}
-
-h4 {
-  @apply fl-text-[1.125rem,1.625rem] leading-[120%] xl:leading-[100%] font-medium
-}
-
-.number_1 {
-  @apply fl-text-[2.625rem,5.75rem] leading-[100%] text-white font-bold
-}
-
-.number_2 {
-  @apply text-[2rem] 2xl:text-[2.875rem] leading-[100%] text-white
-}
-
-.case-item {
-  clip-path: polygon(19% 0, 33% 16%, 100% 16%, 100% 100%, 0 100%, 0 0);
-}
-
-@media (max-width: 640px) {
-  .case-item {
-    clip-path: polygon(40% 0, 50% 16%, 100% 16%, 100% 100%, 0 100%, 0 0);
+  
+  .btn-main {
+    @apply bg-blue-100 text-white hover:text-opacity-60 active:text-opacity-100 disabled:text-[#F5F5F8] disabled:bg-[#909AAE] disabled:fill-[#F5F5F8];
   }
-}
-
-input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }  
-input[type="number"] { -moz-appearance: textfield; }  
-
-
-.text-clamp {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-select {
-  -webkit-appearance: none;
-}
-
-.content {
-  display: none;
-}
-
-.content:not([v-cloak]) {
-  display: block;
+  
+  .btn-blue {
+    @apply bg-blue-200 text-white fill-white active:text-opacity-60 hover:text-opacity-60 xl:active:text-white xl:active:bg-blue-200 disabled:bg-[#C1CDDD] transition duration-500;
+  }
+  
+  
+  
+  h2 {
+    @apply fl-text-[1.5rem,4.25rem] leading-[100%] font-bold text-black
+  }
+  
+  h3 {
+    @apply fl-text-[1.25rem,2.875rem] leading-[120%] xl:leading-[100%] font-medium
+  }
+  
+  h4 {
+    @apply fl-text-[1.125rem,1.625rem] leading-[120%] xl:leading-[100%] font-medium
+  }
+  
+  .number_1 {
+    @apply fl-text-[2.625rem,5.75rem] leading-[100%] text-white font-bold
+  }
+  
+  .number_2 {
+    @apply text-[2rem] 2xl:text-[2.875rem] leading-[100%] text-white
+  }
+  
+  .case-item {
+    clip-path: polygon(19% 0, 33% 16%, 100% 16%, 100% 100%, 0 100%, 0 0);
+  }
+  
+  @media (max-width: 640px) {
+    .case-item {
+      clip-path: polygon(40% 0, 50% 16%, 100% 16%, 100% 100%, 0 100%, 0 0);
+    }
+  }
+  
+  input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }  
+  input[type="number"] { -moz-appearance: textfield; }  
+  
+  
+  .text-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  select {
+    -webkit-appearance: none;
+  }
+  
+  .content {
+    display: none;
+  }
+  
+  .content:not([v-cloak]) {
+    display: block;
+  }
 }
