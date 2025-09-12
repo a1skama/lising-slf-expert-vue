@@ -7,6 +7,7 @@ const totalSteps = 4;
 const resultVisible = ref(false);
 const openModal = ref(false);
 const errors = reactive({});
+const summ = ref(0);
 
 const downloadPDF = async () => {
   if (process.client) {
@@ -20,7 +21,7 @@ const downloadPDF = async () => {
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: {
           scale: 2,
-          useCORS: true, 
+          useCORS: true,
           logging: false,
         },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
@@ -30,8 +31,6 @@ const downloadPDF = async () => {
       .save();
   }
 };
-
-
 
 const form = reactive({
   leasePayments: null,
@@ -52,11 +51,20 @@ const form = reactive({
 
 const result = ref([]);
 
-
-
 const requiredFields = {
-  1: ["leasePayments", "advancePayment", "buyoutPrice", "dkpPrice", "transferDate"],
-  2: ["paidWithoutAdvance", "lastPaymentDate", "penalties", "insuranceExpenses"],
+  1: [
+    "leasePayments",
+    "advancePayment",
+    "buyoutPrice",
+    "dkpPrice",
+    "transferDate",
+  ],
+  2: [
+    "paidWithoutAdvance",
+    "lastPaymentDate",
+    "penalties",
+    "insuranceExpenses",
+  ],
   3: ["resaleDate", "seizureDate"],
   4: ["buyoutOffer", "avitoPrice"],
 };
@@ -67,7 +75,7 @@ function parseDate(str) {
   if (parts.length !== 3) return null;
   let [d, m, y] = parts.map((p) => Number(p));
   if (!d || !m || !y) return null;
-  if (y < 100) y = 2000 + y;  
+  if (y < 100) y = 2000 + y;
   return new Date(y, m - 1, d);
 }
 
@@ -80,10 +88,7 @@ function diffDays(date1, date2) {
 }
 
 const nextStep = () => {
-  // очистка ошибок
   Object.keys(errors).forEach((key) => (errors[key] = null));
-
-  // проверка обязательных полей
   const fields = requiredFields[step.value] || [];
   let valid = true;
   fields.forEach((field) => {
@@ -105,7 +110,10 @@ const nextStep = () => {
   const seizureDate = parseDate(form.seizureDate);
 
   // --- сроки ---
-  const leaseTermDays = Math.max(0, diffDays(lastPaymentDate, transferDate) || 0);
+  const leaseTermDays = Math.max(
+    0,
+    diffDays(lastPaymentDate, transferDate) || 0
+  );
   let factUsageDays = 0;
   if (seizureDate) {
     const raw = diffDays(seizureDate, transferDate) || 0;
@@ -125,18 +133,17 @@ const nextStep = () => {
   const avitoPrice = Number(form.avitoPrice || 0);
 
   // --- ключевые расчёты ---
-  const totalLease = leasePayments + advancePayment + buyoutPrice; // Лизинг+аванс+выкуп
-  const financingAmount = dkpPrice - advancePayment; // Размер финансирования
-  const financingPayment = totalLease - advancePayment - dkpPrice; // Плата за финансирование (по договору)
+  const totalLease = leasePayments + advancePayment + buyoutPrice;
+  const financingAmount = dkpPrice - advancePayment;
+  const financingPayment = totalLease - advancePayment - dkpPrice;
 
-  // Процентная ставка (годовых), %
   let annualRatePercent = 0;
   if (financingAmount > 0 && leaseTermDays > 0) {
-    annualRatePercent = (financingPayment / financingAmount) * (365 / leaseTermDays) * 100;
+    annualRatePercent =
+      (financingPayment / financingAmount) * (365 / leaseTermDays) * 100;
   }
-  annualRatePercent = Number(annualRatePercent.toFixed(2)); // до сотых
+  annualRatePercent = Number(annualRatePercent.toFixed(2));
 
-  // Плата за финансирование фактическая, ₽
   let actualFinancingPayment = 0;
   if (financingAmount > 0 && factUsageDays > 0 && annualRatePercent > 0) {
     actualFinancingPayment =
@@ -144,8 +151,17 @@ const nextStep = () => {
   }
   actualFinancingPayment = Math.round(actualFinancingPayment);
 
-  // Стоимость возвращённого предмета
   const returnedItemValue = Math.round(((buyoutOffer + avitoPrice) / 2) * 0.83);
+
+  // --- итоговая сумма ---
+  summ.value =
+    paidWithoutAdvance +
+    returnedItemValue -
+    financingAmount -
+    actualFinancingPayment -
+    penalties -
+    insuranceExpenses -
+    storageExpenses;
 
   // --- форматирование ---
   const fmt = (n, unit = "") =>
@@ -171,27 +187,17 @@ const nextStep = () => {
   resultVisible.value = true;
 };
 
-
-
-
-
-
-const summ = computed(() => {
-  return (
-    Number(form.leasePayments || 0) +
-    ((Number(form.buyoutOffer || 0) + Number(form.avitoPrice || 0)) / 2) *
-      0.83 -
-    (Number(form.dkpPrice || 0) - Number(form.advancePayment || 0)) -
-    (Number(form.leasePayments || 0) +
-      Number(form.advancePayment || 0) +
-      Number(form.buyoutPrice || 0) -
-      Number(form.advancePayment || 0) -
-      Number(form.dkpPrice || 0)) -
-    Number(form.penalties || 0) -
-    Number(form.insuranceExpenses || 0) -
-    Number(form.storageExpenses || 50000)
-  );
-});
+// const summ = computed(() => {
+//   return (
+//     paidWithoutAdvance +
+//     returnedItemValue -
+//     financingAmount -
+//     actualFinancingPayment -
+//     penalties -
+//     insuranceExpenses -
+//     storageExpenses 
+//   );
+// });
 const summNum = computed(() => {
   return Math.round(Number(summ.value)) || 0;
 });
@@ -221,7 +227,8 @@ const restart = () => {
           Расчет долга лизинговой
         </h2>
         <span class="text-center text-black text-sm 2xl:text-base">
-          Сальдо встречных обязательств <br class="sm:hidden"> по договору выкупного лизинга
+          Сальдо встречных обязательств <br class="sm:hidden" />
+          по договору выкупного лизинга
         </span>
       </div>
 
@@ -423,7 +430,6 @@ const restart = () => {
                 <BaseInput
                   v-model="form.storageExpenses"
                   type="number"
-                
                   placeholder="0"
                   class="w-full"
                   :errors="errors.storageExpenses"
@@ -529,8 +535,7 @@ const restart = () => {
                 class="text-white font-medium text-lg 2xl:text-[1.625rem]"
                 >Итого по расчету лизинг должен вам:</span
               >
-              <span
-                class="text-white font-medium text-lg 2xl:text-[1.625rem]"
+              <span class="text-white font-medium text-lg 2xl:text-[1.625rem]"
                 >{{ Math.abs(summNum).toLocaleString("ru-RU") }} ₽</span
               >
             </div>
@@ -562,7 +567,13 @@ const restart = () => {
           <button @click="restart" class="btn btn-blue bg-[#C1CDDD]">
             Заполнить заново
           </button>
-          <button @click="downloadPDF(); openModal = true;" class="btn btn-main">
+          <button
+            @click="
+              downloadPDF();
+              openModal = true;
+            "
+            class="btn btn-main"
+          >
             <IconArrow />
             Скачать PDF-отчет
           </button>
@@ -640,7 +651,11 @@ const restart = () => {
     </div>
 
     <div class="hidden">
-      <ReportFile :data="result" :summ="Math.abs(summNum).toLocaleString('ru-RU')" id="report-file" />
+      <ReportFile
+        :data="result"
+        :summ="summNum"
+        id="report-file"
+      />
     </div>
   </div>
 </template>
