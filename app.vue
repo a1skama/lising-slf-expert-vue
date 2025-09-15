@@ -1,7 +1,3 @@
-<script setup lang="ts">
-import ReportFile from "./components/ReportFile.vue";
-</script>
-
 <template>
   <div class="flex flex-col bg-gray-400">
     <div class="overflow-hidden content">
@@ -12,8 +8,15 @@ import ReportFile from "./components/ReportFile.vue";
       <FooterComponent />
 
       <CookiesComponent />
-
-      <!-- <ReportFile /> -->
+      {{ data }}
     </div>
   </div>
 </template>
+
+<script setup>
+const config = useRuntimeConfig();
+
+const { data, error } = await useFetch(
+  `${config.public.strapi.url}/api/formulas/computeBatch`
+);
+</script>

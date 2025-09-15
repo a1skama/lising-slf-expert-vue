@@ -1,7 +1,9 @@
 <script setup>
-import { ref, reactive } from "vue";
-// import html2pdf from "html2pdf.js";
+import { ref, reactive, computed } from "vue";
 import ReportFile from "./ReportFile.vue";
+
+const config = useRuntimeConfig(); // URL бэкенда
+
 const step = ref(1);
 const totalSteps = 4;
 const resultVisible = ref(false);
@@ -9,44 +11,21 @@ const openModal = ref(false);
 const errors = reactive({});
 const summ = ref(0);
 
-const downloadPDF = async () => {
-  if (process.client) {
-    const html2pdf = (await import("html2pdf.js")).default;
-    const element = document.getElementById("report-file");
-
-    html2pdf()
-      .set({
-        margin: 0, // убираем лишние отступы
-        filename: "report.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-        },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css"] }, // избегаем разрыва страниц
-      })
-      .from(element)
-      .save();
-  }
-};
-
 const form = reactive({
-  leasePayments: null,
-  advancePayment: null,
-  buyoutPrice: null,
-  dkpPrice: null,
-  transferDate: "",
-  paidWithoutAdvance: null,
-  lastPaymentDate: "",
-  penalties: null,
-  insuranceExpenses: null,
-  resaleDate: "",
-  seizureDate: "",
-  storageExpenses: null,
-  buyoutOffer: null,
-  avitoPrice: null,
+  leasePayments: null, // lease_payments_total
+  advancePayment: null, // advance_payment
+  buyoutPrice: null, // contract_buyout_price
+  dkpPrice: null, // sale_price
+  transferDate: "", // acceptance_date
+  paidWithoutAdvance: null, // paid_lease_payments_without_advance
+  lastPaymentDate: "", // last_payment_date
+  penalties: null, // penalty_debt
+  insuranceExpenses: null, // insurance_unreimbursed (необязательное)
+  resaleDate: "", // resale_date
+  seizureDate: "", // extraction_date
+  storageExpenses: null, // storage_expenses
+  buyoutOffer: null, // proposed_buyout
+  avitoPrice: null, // avito_min_estimate
 });
 
 const result = ref([]);
@@ -59,44 +38,59 @@ const requiredFields = {
     "dkpPrice",
     "transferDate",
   ],
-  2: [
-    "paidWithoutAdvance",
-    "lastPaymentDate",
-    "penalties",
-    "insuranceExpenses",
-  ],
-  3: ["resaleDate", "seizureDate"],
+  2: ["paidWithoutAdvance", "lastPaymentDate", "penalties"], // insuranceExpenses убран
+  3: [], // resaleDate и seizureDate проверяются вручную
   4: ["buyoutOffer", "avitoPrice"],
 };
 
 function parseDate(str) {
   if (!str) return null;
-  const parts = String(str).trim().split(".");
-  if (parts.length !== 3) return null;
-  let [d, m, y] = parts.map((p) => Number(p));
+  const [d, m, y] = str.split(".").map(Number);
   if (!d || !m || !y) return null;
-  if (y < 100) y = 2000 + y;
-  return new Date(y, m - 1, d);
+  return new Date(y < 100 ? 2000 + y : y, m - 1, d).toISOString().split("T")[0];
 }
 
-function diffDays(date1, date2) {
-  if (!(date1 instanceof Date) || !(date2 instanceof Date)) return null;
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
-  const utc2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
-  return Math.floor((utc1 - utc2) / msPerDay);
-}
+const titles = {
+  cost_dfl: "Стоимость ДФЛ, ₽",
+  cost_dkp: "Стоимость ДКП, ₽",
+  advance_payment: "Размер аванса, ₽",
+  lease_term: "Срок лизинга, дней",
+  financing_amount: "Размер финансирования, ₽",
+  contract_financing_fee_total: "Плата за финансирование по договору, ₽",
+  annual_financing_rate_percent: "Процентная ставка, %",
+  actual_usage_days: "Фактическое пользование лизингом, дней",
+  actual_financing_fee: "Плата за финансирование фактическая, ₽",
+  penalty_debt: "Пени, ₽",
+  insurance_unreimbursed: "Страхование, ₽",
+  storage_expenses: "Хранение, ₽",
+  paid_lease_payments_without_advance: "Оплачено без аванса, ₽",
+  returned_item_cost: "Стоимость возвращённого предмета, ₽",
+};
 
-const nextStep = () => {
+const summNum = computed(() => Math.round(Number(summ.value)) || 0);
+
+const nextStep = async () => {
   Object.keys(errors).forEach((key) => (errors[key] = null));
   const fields = requiredFields[step.value] || [];
   let valid = true;
+
+  // стандартная проверка обязательных полей
   fields.forEach((field) => {
     if (!form[field]) {
       errors[field] = "Поле обязательно";
       valid = false;
     }
   });
+
+  // спец-проверка resaleDate / seizureDate (шаг 3)
+  if (step.value === 3) {
+    if (!form.resaleDate && !form.seizureDate) {
+      errors.resaleDate = "Заполните хотя бы одно поле";
+      errors.seizureDate = "Заполните хотя бы одно поле";
+      valid = false;
+    }
+  }
+
   if (!valid) return;
 
   if (step.value < totalSteps) {
@@ -104,103 +98,58 @@ const nextStep = () => {
     return;
   }
 
-  // --- даты ---
-  const transferDate = parseDate(form.transferDate);
-  const lastPaymentDate = parseDate(form.lastPaymentDate);
-  const seizureDate = parseDate(form.seizureDate);
+  const variables = {
+    lease_payments_total: Number(form.leasePayments || 0),
+    advance_payment: Number(form.advancePayment || 0),
+    contract_buyout_price: Number(form.buyoutPrice || 0),
+    sale_price: Number(form.dkpPrice || 0),
+    acceptance_date: parseDate(form.transferDate),
+    last_payment_date: parseDate(form.lastPaymentDate),
+    extraction_date: parseDate(form.seizureDate),
+    resale_date: parseDate(form.resaleDate),
+    paid_lease_payments_without_advance: Number(form.paidWithoutAdvance || 0),
+    penalty_debt: Number(form.penalties || 0),
+    insurance_unreimbursed: Number(form.insuranceExpenses || 0), // может быть 0
+    storage_expenses: Number(form.storageExpenses || 0),
+    proposed_buyout: Number(form.buyoutOffer || 0),
+    avito_min_estimate: Number(form.avitoPrice || 0),
+  };
 
-  // --- сроки ---
-  const leaseTermDays = Math.max(
-    0,
-    diffDays(lastPaymentDate, transferDate) || 0
-  );
-  let factUsageDays = 0;
-  if (seizureDate) {
-    const raw = diffDays(seizureDate, transferDate) || 0;
-    factUsageDays = Math.max(0, raw + 180);
+  try {
+    const res = await fetch(
+      `${config.public.strapi.url}/api/formulas/computeBatch`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variables }),
+      }
+    );
+
+    const json = await res.json();
+
+    result.value = Object.entries(json.results)
+      .filter(([slug]) => slug !== "unjust_enrichment_balance") // исключаем итоговую сумму
+      .map(([slug, val]) => ({
+        title: titles[slug] || slug,
+        subtitle:
+          typeof val === "number"
+            ? Math.round(
+                slug === "annual_financing_rate_percent" ? val * 100 : val
+              ).toLocaleString("ru-RU") +
+              (slug.includes("days")
+                ? " д"
+                : slug.includes("rate")
+                ? " %"
+                : " ₽")
+            : String(val),
+      }));
+
+    summ.value = json.results.unjust_enrichment_balance || 0;
+    resultVisible.value = true;
+  } catch (err) {
+    console.error("Ошибка запроса:", err);
   }
-
-  // --- входные числа ---
-  const leasePayments = Number(form.leasePayments || 0);
-  const advancePayment = Number(form.advancePayment || 0);
-  const buyoutPrice = Number(form.buyoutPrice || 0);
-  const dkpPrice = Number(form.dkpPrice || 0);
-  const penalties = Number(form.penalties || 0);
-  const insuranceExpenses = Number(form.insuranceExpenses || 0);
-  const storageExpenses = Number(form.storageExpenses || 50000);
-  const paidWithoutAdvance = Number(form.paidWithoutAdvance || 0);
-  const buyoutOffer = Number(form.buyoutOffer || 0);
-  const avitoPrice = Number(form.avitoPrice || 0);
-
-  // --- ключевые расчёты ---
-  const totalLease = leasePayments + advancePayment + buyoutPrice;
-  const financingAmount = dkpPrice - advancePayment;
-  const financingPayment = totalLease - advancePayment - dkpPrice;
-
-  let annualRatePercent = 0;
-  if (financingAmount > 0 && leaseTermDays > 0) {
-    annualRatePercent =
-      (financingPayment / financingAmount) * (365 / leaseTermDays) * 100;
-  }
-  annualRatePercent = Number(annualRatePercent.toFixed(2));
-
-  let actualFinancingPayment = 0;
-  if (financingAmount > 0 && factUsageDays > 0 && annualRatePercent > 0) {
-    actualFinancingPayment =
-      financingAmount * (annualRatePercent / 100) * (factUsageDays / 365);
-  }
-  actualFinancingPayment = Math.round(actualFinancingPayment);
-
-  const returnedItemValue = Math.round(((buyoutOffer + avitoPrice) / 2) * 0.83);
-
-  // --- итоговая сумма ---
-  summ.value =
-    paidWithoutAdvance +
-    returnedItemValue -
-    financingAmount -
-    actualFinancingPayment -
-    penalties -
-    insuranceExpenses -
-    storageExpenses;
-
-  // --- форматирование ---
-  const fmt = (n, unit = "") =>
-    `${Math.round(n).toLocaleString("ru-RU")}${unit ? ` ${unit}` : ""}`;
-
-  result.value = [
-    { title: "Стоимость ДФЛ (лизинг+аванс+выкуп), ₽", subtitle: fmt(totalLease, "₽") },
-    { title: "Стоимость по ДКП, ₽", subtitle: fmt(dkpPrice, "₽") },
-    { title: "Аванс, ₽", subtitle: fmt(advancePayment, "₽") },
-    { title: "Срок лизинга, дней", subtitle: fmt(leaseTermDays, "д") },
-    { title: "Размер финансирования, ₽", subtitle: fmt(financingAmount, "₽") },
-    { title: "Плата за финансирование (по договору), ₽", subtitle: fmt(financingPayment, "₽") },
-    { title: "Процентная ставка (годовых), %", subtitle: `${annualRatePercent.toFixed(2)} %` },
-    { title: "Фактический срок пользования, дней", subtitle: fmt(factUsageDays, "д") },
-    { title: "Плата за финансирование фактическая, ₽", subtitle: fmt(actualFinancingPayment, "₽") },
-    { title: "Неустойка (пени, штрафы), ₽", subtitle: fmt(penalties, "₽") },
-    { title: "Страхование (невозмещённое), ₽", subtitle: fmt(insuranceExpenses, "₽") },
-    { title: "Хранение и эвакуация, ₽", subtitle: fmt(storageExpenses, "₽") },
-    { title: "Оплачено (без аванса), ₽", subtitle: fmt(paidWithoutAdvance, "₽") },
-    { title: "Стоимость возвращённого предмета, ₽", subtitle: fmt(returnedItemValue, "₽") },
-  ];
-
-  resultVisible.value = true;
 };
-
-// const summ = computed(() => {
-//   return (
-//     paidWithoutAdvance +
-//     returnedItemValue -
-//     financingAmount -
-//     actualFinancingPayment -
-//     penalties -
-//     insuranceExpenses -
-//     storageExpenses 
-//   );
-// });
-const summNum = computed(() => {
-  return Math.round(Number(summ.value)) || 0;
-});
 
 const prevStep = () => {
   if (step.value > 1) step.value--;
@@ -210,6 +159,25 @@ const restart = () => {
   step.value = 1;
   resultVisible.value = false;
   Object.keys(form).forEach((key) => (form[key] = null));
+};
+
+const downloadPDF = async () => {
+  if (process.client) {
+    const html2pdf = (await import("html2pdf.js")).default;
+    const element = document.getElementById("report-file");
+
+    html2pdf()
+      .set({
+        margin: 0,
+        filename: "report.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["avoid-all", "css"] },
+      })
+      .from(element)
+      .save();
+  }
 };
 </script>
 
@@ -410,9 +378,50 @@ const restart = () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
-                  >Изъятие, дата</span
-                >
+                <div class="flex justify-between gap-2">
+                  <span class="text-white text-sm 2xl:text-base"
+                    >Изъятие, дата</span
+                  >
+                  <div class="relative group">
+                    <div class="cursor-pointer">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                          fill="#6483A9"
+                        />
+                        <path
+                          d="M12 16V12"
+                          stroke="#1F1F1F"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M12 8H12.01"
+                          stroke="#1F1F1F"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="absolute top-7 right-0 p-4 bg-[#FFFFFF33] rounded-[10px] backdrop-blur-xl w-max max-w-[300px] hidden group-hover:block"
+                    >
+                      <span class="text-white"
+                        >Если не известна дата продажи <br />
+                        изъятого предмета новому владельцу
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <BaseInput
                   v-model="form.seizureDate"
                   type="text"
@@ -424,9 +433,49 @@ const restart = () => {
                 />
               </div>
               <div class="flex flex-col justify-between lg:col-span-2">
-                <span class="text-white text-sm 2xl:text-base"
-                  >Расходы на хранение и эвакуация, ₽</span
-                >
+                <div class="flex justify-between gap-2">
+                  <span class="text-white text-sm 2xl:text-base"
+                    >Расходы на хранение и эвакуация, ₽</span
+                  >
+                  <div class="relative group">
+                    <div class="cursor-pointer">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                          fill="#6483A9"
+                        />
+                        <path
+                          d="M12 16V12"
+                          stroke="#1F1F1F"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M12 8H12.01"
+                          stroke="#1F1F1F"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      class="absolute top-7 right-0 p-4 bg-[#FFFFFF33] rounded-[10px] backdrop-blur-xl w-max max-w-[330px] hidden group-hover:block"
+                    >
+                      <span class="text-white"
+                        >Если неизвестно — укажите 50 000 ₽
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
                 <BaseInput
                   v-model="form.storageExpenses"
                   type="number"
@@ -506,7 +555,6 @@ const restart = () => {
                 >
               </div>
             </div>
-
             <div class="flex flex-col md:hidden">
               <div
                 v-for="(item, i) in result"
@@ -651,11 +699,7 @@ const restart = () => {
     </div>
 
     <div class="hidden">
-      <ReportFile
-        :data="result"
-        :summ="summNum"
-        id="report-file"
-      />
+      <ReportFile :data="result" :summ="summNum" id="report-file" />
     </div>
   </div>
 </template>

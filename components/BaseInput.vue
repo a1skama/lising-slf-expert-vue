@@ -12,7 +12,7 @@
     />
 
     <span v-if="errors.length" class="text-[#A3B8D0] leading-none mt-4">
-      Некорректно введена переменная, пожалуйста попробуйте снова.
+      {{ errors }}
     </span>
   </div>
 </template>
