@@ -38,8 +38,8 @@ const requiredFields = {
     "dkpPrice",
     "transferDate",
   ],
-  2: ["paidWithoutAdvance", "lastPaymentDate", "penalties"], // insuranceExpenses убран
-  3: [], // resaleDate и seizureDate проверяются вручную
+  2: ["paidWithoutAdvance", "lastPaymentDate", "penalties"],  
+  3: ["storageExpenses"], 
   4: ["buyoutOffer", "avitoPrice"],
 };
 
@@ -629,7 +629,7 @@ const downloadPDF = async () => {
       </template>
     </div>
 
-    <FormComponent v-if="resultVisible" />
+    <FormComponent v-if="true" />
 
     <div
       v-if="openModal"
