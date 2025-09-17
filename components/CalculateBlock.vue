@@ -70,7 +70,7 @@ const titles = {
 const summNum = computed(() => Math.round(Number(summ.value)) || 0);
 
 const nextStep = async () => {
-  Object.keys(errors).forEach((key) => (errors[key] = null));
+  Object.keys(errors).forEach((key) => (errors[key] = []));
   const fields = requiredFields[step.value] || [];
   let valid = true;
 
@@ -629,7 +629,7 @@ const downloadPDF = async () => {
       </template>
     </div>
 
-    <FormComponent v-if="true" />
+    <FormComponent v-if="resultVisible" />
 
     <div
       v-if="openModal"
