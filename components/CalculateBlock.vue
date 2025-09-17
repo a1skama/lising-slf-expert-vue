@@ -645,7 +645,7 @@ const downloadPDF = async () => {
       </template>
     </div>
 
-    <FormComponent v-if="resultVisible" :autoFile="generatedFile" />
+    <FormComponent v-if="true" :autoFile="generatedFile" />
 
     <div
       v-if="openModal"

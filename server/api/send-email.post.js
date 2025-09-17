@@ -3,15 +3,17 @@ import nodemailer from "nodemailer";
 const config = useRuntimeConfig();
 
 const transporter = nodemailer.createTransport({
-  host: config.emailHost,
-  port: 587,
-  secure: false, // true для портов 465, false для других портов
+  host: config.emailHost,   // smtp.mail.ru
+  port: 465,                // Mail.ru всегда через SSL
+  secure: true,             // обязательно true для 465
   auth: {
-    user: config.emailUser,
-    pass: config.emailPassword,
+    user: config.emailUser,     // твой e-mail на mail.ru
+    pass: config.emailPassword, // пароль от почты или пароль приложения
+  },
+  tls: {
+    rejectUnauthorized: false, // если вдруг будут ошибки сертификата
   },
 });
-
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
   const body = await readBody(event);
