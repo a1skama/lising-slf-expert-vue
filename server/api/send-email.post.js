@@ -3,12 +3,12 @@ import nodemailer from "nodemailer";
 const config = useRuntimeConfig();
 
 const transporter = nodemailer.createTransport({
-  host: config.emailHost,
+  host: 'smtp.gmail.com ',
   port: 587,
   secure: false, // true для портов 465, false для других портов
   auth: {
-    user: config.emailUser,
-    pass: config.emailPassword,
+    user: 'kamilova231@gmail.com',
+    pass: 'csjy mpdx bzdi uwjk',
   },
 });
 
@@ -41,8 +41,8 @@ export default defineEventHandler(async (event) => {
   };
 
   const mailOptions = {
-    from: config.emailUser,
-    to: config.emailUser,
+    from: 'kamilova231@gmail.com',
+    to: 'kamilova231@gmail.com',
     ...options,
   };
 
