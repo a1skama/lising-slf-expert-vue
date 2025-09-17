@@ -4,6 +4,9 @@ import ReportFile from "./ReportFile.vue";
 
 const config = useRuntimeConfig(); // URL бэкенда
 
+const seizureDateOpen = ref(false);
+const storageExpensesOpen = ref(false);
+
 const step = ref(1);
 const totalSteps = 4;
 const resultVisible = ref(false);
@@ -38,8 +41,8 @@ const requiredFields = {
     "dkpPrice",
     "transferDate",
   ],
-  2: ["paidWithoutAdvance", "lastPaymentDate", "penalties"],  
-  3: ["storageExpenses"], 
+  2: ["paidWithoutAdvance", "lastPaymentDate", "penalties"],
+  3: ["storageExpenses"],
   4: ["buyoutOffer", "avitoPrice"],
 };
 
@@ -398,8 +401,12 @@ const downloadPDF = async () => {
                   <span class="text-white text-sm 2xl:text-base"
                     >Изъятие, дата</span
                   >
-                  <div class="relative group">
-                    <div class="cursor-pointer">
+                  <div class="relative" @mouseleave="seizureDateOpen = false">
+                    <div
+                      class="cursor-pointer"
+                      @mouseenter="seizureDateOpen = true"
+                      @click="seizureDateOpen = !seizureDateOpen"
+                    >
                       <svg
                         width="24"
                         height="24"
@@ -428,7 +435,8 @@ const downloadPDF = async () => {
                       </svg>
                     </div>
                     <div
-                      class="absolute top-7 right-0 p-4 bg-[#FFFFFF33] rounded-[10px] backdrop-blur-xl w-max max-w-[300px] hidden group-hover:block"
+                      v-show="seizureDateOpen"
+                      class="absolute top-7 right-0 p-4 bg-[#FFFFFF33] rounded-[10px] backdrop-blur-xl w-max max-w-[300px]"
                     >
                       <span class="text-white"
                         >Если не известна дата продажи <br />
@@ -453,8 +461,15 @@ const downloadPDF = async () => {
                   <span class="text-white text-sm 2xl:text-base"
                     >Расходы на хранение и эвакуация, ₽</span
                   >
-                  <div class="relative group">
-                    <div class="cursor-pointer">
+                  <div
+                    class="relative"
+                    @mouseleave="storageExpensesOpen = false"
+                  >
+                    <div
+                      class="cursor-pointer"
+                      @mouseenter="storageExpensesOpen = true"
+                      @click="storageExpensesOpen = !storageExpensesOpen"
+                    >
                       <svg
                         width="24"
                         height="24"
@@ -483,7 +498,8 @@ const downloadPDF = async () => {
                       </svg>
                     </div>
                     <div
-                      class="absolute top-7 right-0 p-4 bg-[#FFFFFF33] rounded-[10px] backdrop-blur-xl w-max max-w-[330px] hidden group-hover:block"
+                      v-show="storageExpensesOpen"
+                      class="absolute top-7 right-0 p-4 bg-[#FFFFFF33] rounded-[10px] backdrop-blur-xl w-max max-w-[330px]"
                     >
                       <span class="text-white"
                         >Если неизвестно — укажите 50 000 ₽
