@@ -343,6 +343,23 @@ const form = reactive({
   files: [],
 });
 
+const props = defineProps({
+  autoFile: {
+    type: Object,
+    default: null,
+  },
+});
+
+watch(
+  () => props.autoFile,
+  (file) => {
+    if (file && !form.files.find((f) => f.name === file.name)) {
+      form.files.push(file);
+    }
+  },
+  { immediate: true }
+);
+
 const rules = {
   name: { required },
   phone: { required, minLength: minLength(18) },
@@ -370,7 +387,7 @@ watch(practices, (newPractices) => {
       label: practic.title,
     })),
   ];
-}, { immediate: true }); // сразу вызовет при первой загрузке
+}, { immediate: true });
 
 
 watch(practices, (newPractices) => {
@@ -404,7 +421,7 @@ onChange((files) => {
       form.files.push({
         name: file.name,
         size: file.size,
-        content: e.target.result.split(",")[1], // берем только base64 часть
+        content: e.target.result.split(",")[1],
       });
     };
 

@@ -160,23 +160,39 @@ const restart = () => {
   resultVisible.value = false;
   Object.keys(form).forEach((key) => (form[key] = null));
 };
+const generatedFile = ref(null);
 
 const downloadPDF = async () => {
   if (process.client) {
     const html2pdf = (await import("html2pdf.js")).default;
     const element = document.getElementById("report-file");
 
-    html2pdf()
-      .set({
-        margin: 0,
-        filename: "report.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css"] },
-      })
-      .from(element)
-      .save();
+    return new Promise((resolve) => {
+      html2pdf()
+        .set({
+          margin: 0,
+          filename: "Расчет_долга_лизинговой.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, logging: false },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: ["avoid-all", "css"] },
+        })
+        .from(element)
+        .toPdf()
+        .get("pdf")
+        .then((pdf) => {
+          const pdfBase64 = pdf.output("datauristring").split(",")[1];
+
+          const fileObj = {
+            name: "report.pdf",
+            size: Math.ceil((pdfBase64.length * 3) / 4), // размер файла в байтах
+            content: pdfBase64,
+          };
+
+          generatedFile.value = fileObj; // сохраняем для формы
+          resolve(fileObj);
+        });
+    });
   }
 };
 </script>
@@ -629,7 +645,7 @@ const downloadPDF = async () => {
       </template>
     </div>
 
-    <FormComponent v-if="resultVisible" />
+    <FormComponent v-if="resultVisible" :autoFile="generatedFile" />
 
     <div
       v-if="openModal"
