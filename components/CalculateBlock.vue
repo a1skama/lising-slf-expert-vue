@@ -184,20 +184,24 @@ const downloadPDF = async () => {
         .toPdf()
         .get("pdf")
         .then((pdf) => {
-          const pdfBase64 = pdf.output("datauristring").split(",")[1];
+          // сохраняем файл пользователю
+          pdf.save("Расчет_долга_лизинговой.pdf");
 
+          // дополнительно формируем объект
+          const pdfBase64 = pdf.output("datauristring").split(",")[1];
           const fileObj = {
-            name: "report.pdf",
-            size: Math.ceil((pdfBase64.length * 3) / 4), // размер файла в байтах
+            name: "Расчет_долга_лизинговой.pdf",
+            size: Math.ceil((pdfBase64.length * 3) / 4),
             content: pdfBase64,
           };
 
-          generatedFile.value = fileObj; // сохраняем для формы
+          generatedFile.value = fileObj;
           resolve(fileObj);
         });
     });
   }
 };
+
 </script>
 
 <template>
@@ -213,7 +217,7 @@ const downloadPDF = async () => {
         >
           Расчет долга лизинговой
         </h2>
-        <span class="text-center text-black text-sm 2xl:text-base">
+        <span class="text-sm text-center text-black 2xl:text-base">
           Сальдо встречных обязательств <br class="sm:hidden" />
           по договору выкупного лизинга
         </span>
@@ -233,9 +237,9 @@ const downloadPDF = async () => {
                 >шаг 1/4</span
               >
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Сумма лизинговых платежей <br />по договору (без аванса),
                   ₽</span
                 >
@@ -249,7 +253,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Авансовый платеж, ₽</span
                 >
                 <BaseInput
@@ -262,7 +266,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Выкупная стоимость по договору, ₽</span
                 >
                 <BaseInput
@@ -275,7 +279,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Стоимость по ДКП, ₽</span
                 >
                 <BaseInput
@@ -288,7 +292,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between lg:col-span-2">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Акт приёма-передачи в лизинг, дата</span
                 >
                 <BaseInput
@@ -314,9 +318,9 @@ const downloadPDF = async () => {
                 >шаг 2/4</span
               >
             </div>
-            <div class="grid lg:grid-cols-2 gap-10">
+            <div class="grid gap-10 lg:grid-cols-2">
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Оплачено (без аванса), ₽</span
                 >
                 <BaseInput
@@ -329,7 +333,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Последний платёж, дата</span
                 >
                 <BaseInput
@@ -343,7 +347,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Задолженность по неустойки (пени, штрафы), ₽</span
                 >
                 <BaseInput
@@ -356,7 +360,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Невозмещенные расходы на страхование, ₽</span
                 >
                 <BaseInput
@@ -381,9 +385,9 @@ const downloadPDF = async () => {
                 >шаг 3/4</span
               >
             </div>
-            <div class="grid lg:grid-cols-2 gap-10">
+            <div class="grid gap-10 lg:grid-cols-2">
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Продажа изъятого новому владельцу, дата</span
                 >
                 <BaseInput
@@ -398,7 +402,7 @@ const downloadPDF = async () => {
               </div>
               <div class="flex flex-col justify-between">
                 <div class="flex justify-between gap-2">
-                  <span class="text-white text-sm 2xl:text-base"
+                  <span class="text-sm text-white 2xl:text-base"
                     >Изъятие, дата</span
                   >
                   <div class="relative" @mouseleave="seizureDateOpen = false">
@@ -458,7 +462,7 @@ const downloadPDF = async () => {
               </div>
               <div class="flex flex-col justify-between lg:col-span-2">
                 <div class="flex justify-between gap-2">
-                  <span class="text-white text-sm 2xl:text-base"
+                  <span class="text-sm text-white 2xl:text-base"
                     >Расходы на хранение и эвакуация, ₽</span
                   >
                   <div
@@ -529,9 +533,9 @@ const downloadPDF = async () => {
                 >шаг 4/4</span
               >
             </div>
-            <div class="grid lg:grid-cols-2 gap-10">
+            <div class="grid gap-10 lg:grid-cols-2">
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Предложение выкупа на день расторжения, ₽</span
                 >
                 <BaseInput
@@ -544,7 +548,7 @@ const downloadPDF = async () => {
                 />
               </div>
               <div class="flex flex-col justify-between">
-                <span class="text-white text-sm 2xl:text-base"
+                <span class="text-sm text-white 2xl:text-base"
                   >Нижняя оценка Авито, ₽</span
                 >
                 <BaseInput
@@ -573,16 +577,16 @@ const downloadPDF = async () => {
                 <span
                   v-for="(item, i) in result"
                   :key="i"
-                  class="text-gray-300 text-sm 2xl:text-base"
+                  class="text-sm text-gray-300 2xl:text-base"
                   >{{ item.title }}</span
                 >
               </div>
               <div class="border border-blue-400 h-full w-[1px]"></div>
-              <div class="flex flex-col gap-5 items-center">
+              <div class="flex flex-col items-center gap-5">
                 <span
                   v-for="(item, i) in result"
                   :key="i"
-                  class="text-white text-sm 2xl:text-base font-medium"
+                  class="text-sm font-medium text-white 2xl:text-base"
                   >{{ item.subtitle }}</span
                 >
               </div>
@@ -591,12 +595,12 @@ const downloadPDF = async () => {
               <div
                 v-for="(item, i) in result"
                 :key="i"
-                class="flex flex-col py-5 first:border-t border-b border-blue-400"
+                class="flex flex-col py-5 border-b border-blue-400 first:border-t"
               >
-                <span class="text-gray-300 text-sm 2xl:text-base">{{
+                <span class="text-sm text-gray-300 2xl:text-base">{{
                   item.title
                 }}</span>
-                <span class="text-white text-sm 2xl:text-base font-medium">{{
+                <span class="text-sm font-medium text-white 2xl:text-base">{{
                   item.subtitle
                 }}</span>
               </div>
@@ -665,7 +669,7 @@ const downloadPDF = async () => {
 
     <div
       v-if="openModal"
-      class="fixed top-0 left-0 w-full h-full bg-blue-100 flex items-center justify-center"
+      class="fixed top-0 left-0 flex items-center justify-center w-full h-full bg-blue-100"
     >
       <div
         class="flex flex-col justify-center gap-5 sm:gap-[30px] 2xl:gap-10 py-[42px] px-10 _container"
@@ -691,41 +695,41 @@ const downloadPDF = async () => {
         <div
           class="grid grid-cols-2 sm:grid-cols-4 w-full gap-[9px] sm:gap-4 xl:gap-6 2xl:gap-8"
         >
-          <a
-            href="#"
+          <NuxtLink
+            to="tel:88006000462"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
-            +8 (831) 414 04 02
-          </a>
+            +7 800 600 04 62
+          </NuxtLink>
 
-          <a
-            href="#"
+          <NuxtLink
+            to="mailto:oo@slf.expert"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
-            +7 (903) 601 04 02
-          </a>
+          oo@slf.expert
+          </NuxtLink>
 
-          <a
-            href="#"
+          <NuxtLink
+            to="https://wa.me/79036010402"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
             <IconWhatsapp class="w-[23px] h-[22px] flex-shrink-0" />
 
             <span class="uppercase">slf.expert</span>
-          </a>
+          </NuxtLink>
 
-          <a
-            href="#"
+          <NuxtLink
+            to="https://t.me/slf_expert"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
             <IconTelegram class="w-[23px] h-[22px] flex-shrink-0" />
 
             <span class="uppercase">slf.expert</span>
-          </a>
+          </NuxtLink>
         </div>
       </div>
     </div>

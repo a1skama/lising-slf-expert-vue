@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-blue-100 w-full">
+  <div class="w-full bg-blue-100">
     <div class="py-[5.5rem] sm:py-[6.25rem] 2xl:py-[7.5rem] _container">
       <div v-show="!isSubmitSuccess && !isSubmitError">
         <h2 ref="formTitle" class="text-white">
@@ -208,26 +208,23 @@
           class="grid grid-cols-2 sm:grid-cols-4 w-full gap-[9px] sm:gap-4 xl:gap-6 2xl:gap-8"
         >
           <a
-            v-if="data.contacts.phones[0].value"
-            :href="data.contacts.phones[0].value"
+            href="tel:88006000462"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
-            {{ data.contacts.phones[0].value }}
+            8 (800) 600 04 62
           </a>
 
           <a
-            v-if="data.contacts.phones[1].value"
-            :href="data.contacts.phones[1].value"
+            href="tel:+78314140402"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
-            {{ data.contacts.phones[1].value }}
+            +7 (831) 414 04 02
           </a>
 
           <a
-            v-if="data.contacts.whatsappLink"
-            :href="data.contacts.whatsappLink"
+            href="https://wa.me/79036010402"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
@@ -237,8 +234,7 @@
           </a>
 
           <a
-            v-if="data.contacts.telegramLink"
-            :href="data.contacts.telegramLink"
+            href="https://t.me/slf_expert"
             target="_blank"
             class="text-white text-sm 2xl:text-base w-full h-11 sm:h-[54px] 2xl:h-[64px] border-white border rounded-full flex items-center justify-center gap-2.5"
           >
@@ -333,7 +329,6 @@ const { data, pending, error } = await useFetch(
 
 const practices = computed(() => data.value?.practices?.practices ?? []);
 
-
 const form = reactive({
   name: "",
   phone: "",
@@ -347,6 +342,10 @@ const props = defineProps({
   autoFile: {
     type: Object,
     default: null,
+  },
+  modal: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -378,17 +377,20 @@ const practics = ref([
   { id: 0, value: "Практика не выбрана", label: "Выберите практику" },
 ]);
 
-watch(practices, (newPractices) => {
-  practics.value = [
-    { id: 0, value: "Практика не выбрана", label: "Выберите практику" },
-    ...newPractices.map((practic, practicId) => ({
-      id: practicId + 1,
-      value: practic.title,
-      label: practic.title,
-    })),
-  ];
-}, { immediate: true });
-
+watch(
+  practices,
+  (newPractices) => {
+    practics.value = [
+      { id: 0, value: "Практика не выбрана", label: "Выберите практику" },
+      ...newPractices.map((practic, practicId) => ({
+        id: practicId + 1,
+        value: practic.title,
+        label: practic.title,
+      })),
+    ];
+  },
+  { immediate: true }
+);
 
 watch(practices, (newPractices) => {
   newPractices.forEach((practic, practicId) => {
